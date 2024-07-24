@@ -32,6 +32,7 @@ pub fn run(
     ttl: Option<String>,
     cmd: Option<String>,
     socket: PathBuf,
+    here: bool,
 ) -> anyhow::Result<()> {
     info!("\n\n======================== STARTING ATTACH ============================\n\n");
     test_hooks::emit("attach-startup");
@@ -61,7 +62,18 @@ pub fn run(
 
     let mut detached = false;
     let mut tries = 0;
-    while let Err(err) = do_attach(&config_manager, name.as_str(), &ttl, &cmd, &socket) {
+
+    let path = if !here {
+	None
+    } else {
+	let current_dir = env::current_dir();
+	if let Err(ref err) = current_dir {
+	    warn!("could not find current directory '{}'", err);
+	}
+	current_dir.ok()
+    };
+    
+    while let Err(err) = do_attach(&config_manager, name.as_str(), &ttl, &cmd, &socket, &path) {
         match err.downcast() {
             Ok(BusyError) if !force => {
                 eprintln!("session '{}' already has a terminal attached", name);
@@ -116,6 +128,7 @@ fn do_attach(
     ttl: &Option<time::Duration>,
     cmd: &Option<String>,
     socket: &PathBuf,
+    path: &Option<PathBuf>
 ) -> anyhow::Result<()> {
     let mut client = dial_client(socket)?;
 
@@ -148,6 +161,7 @@ fn do_attach(
                 .collect::<Vec<_>>(),
             ttl_secs: ttl.map(|d| d.as_secs()),
             cmd: cmd.clone(),
+	    path: path.clone(),
         }))
         .context("writing attach header")?;
 
@@ -186,6 +200,7 @@ fn do_attach(
     match client.pipe_bytes() {
         Ok(exit_status) => std::process::exit(exit_status),
         Err(e) => Err(e),
+
     }
 }
 

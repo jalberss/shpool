@@ -132,6 +132,8 @@ pass to the binary using the shell-words crate."
         cmd: Option<String>,
         #[clap(help = "The name of the shell session to create or attach to")]
         name: String,
+	#[clap(long, default_value_t = false, help = "Whether to cd to current directory on `attach`")]
+	here: bool,
     },
 
     #[clap(about = "Make the given session detach from shpool
@@ -252,8 +254,8 @@ pub fn run(args: Args, hooks: Option<Box<dyn hooks::Hooks + Send + Sync>>) -> an
             hooks.unwrap_or(Box::new(NoopHooks {})),
             socket,
         ),
-        Commands::Attach { force, ttl, cmd, name } => {
-            attach::run(args.config_file, name, force, ttl, cmd, socket)
+        Commands::Attach { force, ttl, cmd, name, here } => {
+            attach::run(args.config_file, name, force, ttl, cmd, socket, here)
         }
         Commands::Detach { sessions } => detach::run(sessions, socket),
         Commands::Kill { sessions } => kill::run(sessions, socket),

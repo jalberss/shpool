@@ -17,7 +17,7 @@ use std::{
     fmt,
     io::{self, Read, Write},
     os::unix::net::UnixStream,
-    path::Path,
+    path::{Path, PathBuf},
     sync::atomic::{AtomicI32, Ordering},
     thread, time,
 };
@@ -217,6 +217,10 @@ pub struct AttachHeader {
     /// If specified, a command to run instead of the users default shell.
     #[serde(default)]
     pub cmd: Option<String>,
+
+    /// If specified by command line flags, the directory to change to.
+    #[serde(default)]
+    pub path: Option<PathBuf>,
 }
 
 impl AttachHeader {

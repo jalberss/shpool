@@ -643,7 +643,8 @@ impl Server {
             cmd
         };
 
-        cmd.current_dir(user_info.home_dir.clone())
+	let current_dir: PathBuf = header.path.as_ref().map_or_else(|| Path::new(&user_info.home_dir).to_path_buf(), |path_str| Path::new(path_str).to_path_buf());
+        cmd.current_dir(current_dir)
             .stdin(process::Stdio::inherit())
             .stdout(process::Stdio::inherit())
             .stderr(process::Stdio::inherit())
